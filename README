@@ -1,0 +1,43 @@
+Log Weaver
+==========
+
+Log Weaver is a solution for sites with multiple application servers that want to be able to parse their production logs without visiting each application server.  The idea behind unified production logging is described quite well in this blog by Blue Box Group:
+
+http://www.blueboxgrp.com/news/2009/06/unified_rails_logging_with_syslog-ng
+
+The problem with using Syslog-ng, as outlined in that tutorial, is that use of Syslog means that your Rails production logs will no longer be buffered, so if you're running, say, 20 processes within your Passenger, then your logfile will become a witches cauldron of intermixed lines from all states of all 20 processes.  
+
+Log Weaver seeks to solve this problem by using your existing, unmodified production.log files, and coalescing them into bite-sized chunks in a single location.
+
+Log Weaver Functionality
+========================
+
+Log Weaver v0.2 sports the following featureset:
+
+* Sync as many production logfiles, from as many hosts as you want, into a single logfile on a single server
+* Use your existing Rails production.log, no need to modify how it's formatted
+* Break up your unified log file into bite sized chunks that you specify from a YML file, so you don't end up with a 10 GB unified logfile that you can't open or use
+* Does not run on or adversely affect performance of app servers.  Uses rsync to grab production log files from app servers, then does the "hard work" of combining them on what is presumably a separate server.
+
+Installation
+============
+
+Clone the log-weaver github project into your vendor/plugins directory.  No models, database tables, or installation is needed for this plugin.  Simply edit the /log-weaver/config/system_logs.yml file to specify the settings of your hosts.
+
+Usage
+=====
+
+Run "rake log_weaver:weave_logs" to initiate the process of log merging.
+
+When you run this task, Log Weaver will rsync your logfiles from the locations you specified in the YML file.  The first time you run Log Weaver, this might take a minute or two, depending on how big your production logs are.  On subsequent runs, it should be pretty instanteous, since rsync is smart about merging files.
+
+After rsyncing your production logs from your app servers, Log Weaver will build the production logs into bite-sized hashes and merge them in chronological order into the file that you specified in your YML file.  Limited testing has shown that combining three logfiles that were each 1+ GB used less than 300MB of memory and completed in about 10 minutes.
+
+Run "rake log_weaver:weave_logs" periodically to add to your unified log.  When the size of your unified log exceeds the size you specified in the settings YML file, the unified log will be renamed "unified_log_X.log" where X is the lowest integer of a file that doesn't exist in your log directory.  That is, the first time that you fill up your unified log, if you named your file "unified.log," Log Weaver would move the original log to "unified_2.log" and then open a new "unified.log" file to continue merging your logs.
+
+Future Improvements
+===================
+
+Log Weaver was written over the course of a few hours to fit the baseline needs of Bonanzle, there is surely plenty of room to improve!  For starters, this would probably make more sense as a gem than a Rails plugin.  
+
+Feel free to fork and add whatever you think it needs and ping me to pull in your improvements and we can make this plugin a worthwhile thing.
