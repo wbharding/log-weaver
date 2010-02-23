@@ -1,0 +1,12 @@
+path_to_unified_log: /path/to/your/unified.log
+maximum_unified_log_size: 300000000 # That's 300MB
+hosts_to_unify:
+  host_1:
+    address: 10.0.200.188
+    log_location: /path/to/production.log
+  host_2:
+    address: 10.0.200.185
+    log_location: /path/to/production.log
+  host_3:
+    address: 10.0.200.179
+    log_location: /path/to/production.log
